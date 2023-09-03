@@ -5,6 +5,7 @@ go 1.13
 require (
 	cloud.google.com/go v0.78.0 // indirect
 	github.com/davecgh/go-spew v1.1.1
+	github.com/google/uuid v1.3.1 // indirect
 	github.com/jarcoal/httpmock v1.0.8
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/slack-go/slack v0.8.1

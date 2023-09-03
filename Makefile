@@ -15,7 +15,6 @@ all: test build
 test: $(PKGS)
 
 build:
-	go build -o bin/jira-cli github.com/Clever/flarebot/jira/testcmd
 	go build -o bin/slack-cli github.com/Clever/flarebot/slack/testcmd
 	go build -o bin/$(EXECUTABLE) $(PKG)
 

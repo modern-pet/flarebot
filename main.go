@@ -298,7 +298,7 @@ func main() {
 
 		if flareDocErr != nil {
 			client.Send("I'm having trouble connecting to google docs right now, so I can't make a flare doc for tracking. I'll try my best to recover.", msg.Channel)
-			log.Printf("No google flare doc created: %s", err)
+			log.Printf("No google flare doc created: %s", flareDocErr)
 		} else {
 			log.Printf("Flare doc created")
 		}
@@ -308,7 +308,7 @@ func main() {
 		slackHistoryDoc, historyDocErr := googleDocsServer.CreateFromTemplate(slackHistoryDocTitle, googleSlackHistoryDocID, map[string]string{})
 
 		if historyDocErr != nil {
-			log.Printf("No google slack history doc created: %s", err)
+			log.Printf("No google slack history doc created: %s", historyDocErr)
 		} else {
 			log.Printf("Google slack history doc created")
 		}
@@ -344,7 +344,7 @@ func main() {
 		channel, channelErr := client.CreateChannel(flareID)
 		if channelErr != nil {
 			client.Send("Slack is giving me some trouble right now, so I couldn't create a channel for you. It could be that the channel already exists, but hopefully no one did that already. If you need to make a new channel to discuss, please don't use the next flare-number channel, that'll confuse me later on.", msg.Channel)
-			log.Printf("Couldn't create Flare channel: %s", err)
+			log.Printf("Couldn't create Flare channel: %s", channelErr)
 		} else {
 			log.Printf("Flare channel created")
 

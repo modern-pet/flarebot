@@ -70,8 +70,7 @@ func main() {
 	if os.Getenv("SLACK_LEGACY_TOKEN") != "" {
 		accessToken = getEnv("SLACK_FLAREBOT_ACCESS_TOKEN")
 	} else {
-		token := slack.DecodeOAuthToken(getEnv("SLACK_FLAREBOT_ACCESS_TOKEN"))
-		accessToken = token.AccessToken
+		accessToken = getEnv("SLACK_FLAREBOT_ACCESS_TOKEN")
 	}
 	domain := getEnv("SLACK_DOMAIN")
 	username := getEnv("SLACK_USERNAME")

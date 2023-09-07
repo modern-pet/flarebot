@@ -1,15 +1,10 @@
 package slack
 
 import (
-	"bytes"
-	"encoding/base64"
-	"encoding/gob"
 	"fmt"
 	"log"
 	"regexp"
 	"sync"
-
-	"golang.org/x/oauth2"
 
 	slk "github.com/slack-go/slack"
 )
@@ -209,19 +204,19 @@ func (c *Client) start() {
 				c.handleMessage(msg.Data.(*slk.MessageEvent))
 			case *slk.RTMError:
 				error := msg.Data.(*slk.RTMError)
-				fmt.Printf("Error: %d - %s\n", error.Code, error.Msg)
+				fmt.Printf("RTM error: %d - %s\n", error.Code, error.Msg)
 			case *slk.UserTypingEvent, *slk.PresenceChangeEvent, slk.LatencyReport:
 				// Do nothing
 				continue
 			case *slk.ConnectionErrorEvent:
 				error := msg.Data.(*slk.ConnectionErrorEvent)
-				fmt.Printf("Error: %v\n", error)
+				fmt.Printf("Connection error: %v\n", error)
 			case *slk.UnmarshallingErrorEvent:
 				error := msg.Data.(*slk.UnmarshallingErrorEvent)
-				fmt.Printf("Error: %v\n", error)
+				fmt.Printf("Unmarshal event error: %v\n", error)
 			case *slk.IncomingEventError:
 				error := msg.Data.(*slk.IncomingEventError)
-				fmt.Printf("Error: %v\n", error)
+				fmt.Printf("Incoming event error: %v\n", error)
 			case *slk.ChannelCreatedEvent:
 				data := msg.Data.(*slk.ChannelCreatedEvent)
 				fmt.Printf("Created channel: %s (%s)\n", data.Channel.Name, data.Channel.ID)
@@ -305,7 +300,7 @@ func NewClient(token, domain, username string, historyCallback func(message *Mes
 
 	users, err := api.GetUsers()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to get users with error: %s", err)
 	}
 	var userId string
 	for _, user := range users {
@@ -319,14 +314,4 @@ func NewClient(token, domain, username string, historyCallback func(message *Mes
 	client := &Client{API: api, rtm: rtm, Username: username, userId: userId, recordHistoryCallback: historyCallback}
 	client.start()
 	return client, nil
-}
-
-func DecodeOAuthToken(tokenString string) *oauth2.Token {
-	tokenBytes, _ := base64.StdEncoding.DecodeString(tokenString)
-	tokenBytesBuffer := bytes.NewBuffer(tokenBytes)
-	dec := gob.NewDecoder(tokenBytesBuffer)
-	token := new(oauth2.Token)
-	dec.Decode(token)
-
-	return token
 }

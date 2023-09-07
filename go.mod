@@ -7,6 +7,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/google/uuid v1.3.1 // indirect
 	github.com/jarcoal/httpmock v1.0.8
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/slack-go/slack v0.8.1
 	github.com/spf13/cobra v1.1.3

@@ -183,6 +183,9 @@ func main() {
 
 	// Google Docs service
 	googleDocsServer, err := googledocs.NewGoogleDocsServerWithServiceAccount(os.Getenv("GOOGLE_FLAREBOT_SERVICE_ACCOUNT_CONF"))
+	if err != nil {
+		panic(err)
+	}
 	googleDomain := os.Getenv("GOOGLE_DOMAIN")
 
 	googleFlareDocID := os.Getenv("GOOGLE_TEMPLATE_DOC_ID")

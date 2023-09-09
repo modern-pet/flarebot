@@ -1,9 +1,10 @@
 package slack
 
 import (
-	"fmt"
+	"regexp"
 
 	slk "github.com/slack-go/slack"
+	"github.com/slack-go/slack/slackevents"
 )
 
 type Message struct {
@@ -33,18 +34,26 @@ func (m *Message) AuthorUser() (*slk.User, error) {
 	return user, nil
 }
 
-func (m *Message) Respond(msg string) {
-	m.sender(fmt.Sprintf("@%s: %s", m.AuthorName, msg), m.Channel)
+func messageEventToMessage(evt *slackevents.MessageEvent, api *slk.Client) *Message {
+	return &Message{
+		AuthorId:   evt.BotID,
+		AuthorName: evt.User,
+		Timestamp:  evt.EventTimeStamp,
+		Text:       evt.Text,
+		Channel:    evt.Channel,
+		api:        api,
+	}
 }
 
-func messageEventToMessage(msg *slk.MessageEvent, api *slk.Client, sender func(string, string)) *Message {
-	return &Message{
-		AuthorId:   msg.User,
-		AuthorName: msg.Username,
-		Timestamp:  msg.Timestamp,
-		Text:       msg.Text,
-		Channel:    msg.Channel,
-		api:        api,
-		sender:     sender,
-	}
+type MessageHandler struct {
+	pattern *regexp.Regexp
+	fn      func(*Message, [][]string)
+}
+
+func (h *MessageHandler) Match(msg *Message) bool {
+	return h.pattern.Match([]byte(msg.Text))
+}
+
+func (h *MessageHandler) Handle(msg *Message) {
+	h.fn(msg, h.pattern.FindAllStringSubmatch(msg.Text, -1))
 }

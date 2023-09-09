@@ -1,6 +1,6 @@
 module github.com/modern-pet/flarebot
 
-go 1.13
+go 1.16
 
 require (
 	cloud.google.com/go v0.110.7 // indirect

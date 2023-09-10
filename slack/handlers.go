@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strconv"
 	"strings"
 
-	"github.com/google/uuid"
+	"github.com/modern-pet/flarebot/aws"
 	"github.com/modern-pet/flarebot/helpers"
 	"github.com/slack-go/slack"
 )
@@ -95,8 +96,13 @@ func (c *SlackClient) fireAFlareHandler(msg *Message, params [][]string) {
 	}
 
 	log.Printf("Attempting to create flare channel")
-	// // set up the Flare room
-	flareID := fmt.Sprintf("flare-%s", uuid.New().String())
+	// set up the Flare room
+	channelID, err := aws.GetChannelIDFromS3()
+	if err != nil {
+		log.Printf("Failed to get channel id from S3 with error: %s", err)
+	}
+	flareID := fmt.Sprintf("flare-%s", channelID)
+	log.Printf("Using channel ID: %s", flareID)
 	channel, channelErr := c.Client.CreateConversation(slack.CreateConversationParams{ChannelName: flareID, IsPrivate: false})
 	if channelErr != nil {
 		c.Client.PostMessage(msg.Channel, slack.MsgOptionText("Slack is giving me some trouble right now, so I couldn't create a channel for you. It could be that the channel already exists, but hopefully no one did that already. If you need to make a new channel to discuss, please don't use the next flare-number channel, that'll confuse me later on.", false))
@@ -142,7 +148,45 @@ func (c *SlackClient) fireAFlareHandler(msg *Message, params [][]string) {
 		}
 
 		c.Client.PostMessage(msg.Channel, slack.MsgOptionText(fmt.Sprintf("<!%s>: Flare fired. Please visit <#%s> -- %s", target, channel.ID, topic), false))
+		if err = aws.IncrementChannelIDInS3(); err != nil {
+			log.Printf("Failed to increment channel id in S3 with error: %s", err)
+		}
 	}
+}
+
+func (c *SlackClient) takingLeadHandler(msg *Message, params [][]string) {
+	author, _ := msg.AuthorUser()
+	c.Client.PostMessage(msg.Channel, slack.MsgOptionText(fmt.Sprintf("Oh Captain My Captain! <@%s> is now incident lead. Please confirm all actions with them.", author.ID), false))
+}
+
+func (c *SlackClient) mitigateFlareHandler(msg *Message, params [][]string) {
+	c.Client.PostMessage(msg.Channel, slack.MsgOptionText("... and the Flare was mitigated, and there was much rejoicing throughout the land.", false))
+	c.Client.PostMessage(c.ExpectedChannel, slack.MsgOptionText("Flare has been mitigated", false))
+}
+
+func (c *SlackClient) notAFlareHandler(msg *Message, params [][]string) {
+	c.Client.PostMessage(msg.Channel, slack.MsgOptionText("turns out this is not a flare", false))
+	c.Client.PostMessage(c.ExpectedChannel, slack.MsgOptionText("turns out this is not a flare", false))
+}
+
+func (c *SlackClient) helpHandler(msg *Message, params [][]string) {
+	c.sendHelpMessage(msg.Channel, (msg.Channel == c.ExpectedChannel))
+}
+
+func (c *SlackClient) helpAllHandler(msg *Message, params [][]string) {
+	c.Client.PostMessage(msg.Channel, slack.MsgOptionText("Commands Available in the #flares channel:", false))
+	c.sendCommandsHelpMessage(msg.Channel, mainChannelCommands)
+	c.Client.PostMessage(msg.Channel, slack.MsgOptionText("Commands Available in a single Flare channel:", false))
+	c.sendCommandsHelpMessage(msg.Channel, flareChannelCommands)
+	c.Client.PostMessage(msg.Channel, slack.MsgOptionText("Commands Available in other channels:", false))
+	c.sendCommandsHelpMessage(msg.Channel, otherChannelCommands)
+}
+
+func (c *SlackClient) otherHandlers(msg *Message, params [][]string) {
+	c.Client.PostMessage(msg.Channel, slack.MsgOptionText(`I'm sorry, I didn't understand that command.
+		To fire a flare: @flarebot fire a flare <p0|p1|p2> [pre-emptive|retroactive] <problem>
+		For other commands: @flarebot help [all]
+	`, false))
 }
 
 func (c *SlackClient) sendHelpMessage(channel string, inMainChannel bool) {
@@ -193,15 +237,19 @@ func (c *SlackClient) recordSlackHistory(message *Message) error {
 		return nil
 	}
 
-	var formattedTime = strings.Split(message.Timestamp, ".")[0]
+	msgTimestamp := strings.Split(message.Timestamp, ".")[0]
+	timestampInt, err := strconv.ParseInt(msgTimestamp, 10, 64)
+	if err != nil {
+		fmt.Printf("Failed to convert timestamp to int %s:", err)
+	}
+	jktTimestamp := helpers.UnixToJakartaTime(timestampInt)
 	author, err := message.Author()
 	if err != nil {
 		author = message.AuthorId
 	}
 
 	data := []interface{}{
-		message.Timestamp,
-		formattedTime,
+		jktTimestamp,
 		author,
 		message.Text,
 	}

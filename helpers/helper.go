@@ -15,3 +15,12 @@ func GetJakartaDateAndTime() (string, error) {
 	currentTimeInJakarta := time.Now().In(location)
 	return currentTimeInJakarta.String(), nil
 }
+
+func UnixToJakartaTime(unixTimestamp int64) time.Time {
+	location, err := time.LoadLocation("Asia/Jakarta")
+	if err != nil {
+		panic(err)
+	}
+
+	return time.Unix(unixTimestamp, 0).In(location)
+}

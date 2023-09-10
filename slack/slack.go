@@ -433,6 +433,7 @@ func (c *SlackClient) handleMessage(evt *slackevents.MessageEvent) {
 	// If the message is from us, don't do anything
 	author, _ := m.Author()
 	if author == c.Username {
+		fmt.Println("Message is from us, skipping -------------------------")
 		return
 	}
 

@@ -8,13 +8,12 @@ import (
 )
 
 type Message struct {
-	AuthorId   string
-	AuthorName string
-	Timestamp  string
-	Text       string
-	Channel    string
-	api        *slk.Client
-	sender     func(string, string)
+	AuthorId  string
+	Timestamp string
+	Text      string
+	Channel   string
+	api       *slk.Client
+	sender    func(string, string)
 }
 
 func (m *Message) Author() (string, error) {
@@ -36,12 +35,11 @@ func (m *Message) AuthorUser() (*slk.User, error) {
 
 func messageEventToMessage(evt *slackevents.MessageEvent, api *slk.Client) *Message {
 	return &Message{
-		AuthorId:   evt.BotID,
-		AuthorName: evt.User,
-		Timestamp:  evt.EventTimeStamp,
-		Text:       evt.Text,
-		Channel:    evt.Channel,
-		api:        api,
+		AuthorId:  evt.User,
+		Timestamp: evt.EventTimeStamp,
+		Text:      evt.Text,
+		Channel:   evt.Channel,
+		api:       api,
 	}
 }
 
